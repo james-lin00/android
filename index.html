@@ -475,7 +475,21 @@
     window.onload = function () {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-      // Android → 用 market:// 直接喚起 Play Store App，失敗則開網頁版
+      // ── WebView 偵測 ──────────────────────────────────
+      // Android WebView：UA 含 wv，或含 Version/x.x（非 Chrome）
+      const isAndroidWebView = /android/i.test(userAgent) && (/wv\)/.test(userAgent) || (/Version\/\d/.test(userAgent) && !/Chrome/.test(userAgent)));
+      // iOS WKWebView：含 AppleWebKit 但不含 Safari
+      const isIOSWebView = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /AppleWebKit/.test(userAgent) && !/Safari/.test(userAgent);
+
+      const isWebView = isAndroidWebView || isIOSWebView;
+
+      // WebView 內 → 顯示桌機版內容（正常瀏覽）
+      if (isWebView) {
+        document.getElementById('desktop-view').style.display = 'flex';
+        return;
+      }
+
+      // Android 瀏覽器 → 喚起 Play Store App
       if (/android/i.test(userAgent)) {
         try {
           window.location.replace('market://details?id=com.jkf.lady');
@@ -483,7 +497,7 @@
           window.location.replace('https://play.google.com/store/apps/details?id=com.jkf.lady');
         }
       }
-      // iOS → 跳 App Store
+      // iOS 瀏覽器 → 跳 App Store
       else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
         window.location.replace('https://apps.apple.com/tw/app/jkone/id1570579526');
       }
