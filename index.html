@@ -475,9 +475,13 @@
     window.onload = function () {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-      // Android → 跳 Google Play
+      // Android → 用 market:// 直接喚起 Play Store App，失敗則開網頁版
       if (/android/i.test(userAgent)) {
-        window.location.replace('https://play.google.com/store/apps/details?id=com.jkf.lady');
+        try {
+          window.location.replace('market://details?id=com.jkf.lady');
+        } catch (e) {
+          window.location.replace('https://play.google.com/store/apps/details?id=com.jkf.lady');
+        }
       }
       // iOS → 跳 App Store
       else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
