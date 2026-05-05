@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JKPost — 開啟內容</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --border: #2a2a30;
+      --accent: #e8c97a;
+      --accent2: #c45f3c;
+      --text-primary: #f0ede6;
+      --text-muted: #7a7870;
+      --text-dim: #4a4845;
+      --red: #c45f3c;
+      --green: #5c9e6e;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Noto Serif TC', serif;
+      overflow: hidden;
+    }
+
+    /* ── MOBILE VIEW ── */
+    #mobile-view {
+      display: none;
+      position: fixed;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      background: var(--bg);
+    }
+
+    .mobile-bg-decor {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .mobile-bg-decor::before {
+      content: '';
+      position: absolute;
+      top: -120px; left: -120px;
+      width: 480px; height: 480px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232,201,122,0.06) 0%, transparent 70%);
+    }
+    .mobile-bg-decor::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; right: -80px;
+      width: 360px; height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(196,95,60,0.07) 0%, transparent 70%);
+    }
+
+    .mobile-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 360px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 28px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .app-icon {
+      width: 72px; height: 72px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1e1e22, #2a2a30);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .mobile-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-primary);
+      text-align: center;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .mobile-subtitle {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .status-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .status-dot.trying { background: var(--accent); }
+    .status-dot.success { background: var(--green); animation: none; }
+    .status-dot.failed  { background: var(--red);   animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .status-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .status-text span { color: var(--accent); }
+
+    .cta-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      transition: transform 0.15s, opacity 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .cta-btn:active { transform: scale(0.97); opacity: 0.9; }
+    .cta-btn.primary {
+      background: var(--accent);
+      color: #0d0d0f;
+    }
+    .cta-btn.secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .cta-btn.hidden { display: none; }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    .store-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .countdown-bar {
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .countdown-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+
+    /* ── DESKTOP VIEW ── */
+    #desktop-view {
+      display: none;
+      position: fixed;
+      inset: 0;
+      flex-direction: column;
+    }
+
+    .desktop-nav {
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      animation: fadeDown 0.5s ease both;
+    }
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text-primary);
+      letter-spacing: -1px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links {
+      display: flex; gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    .desktop-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    .hero-left {
+      padding: 64px 64px 64px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: fadeLeft 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 24px; height: 1px;
+      background: var(--accent);
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 4vw, 58px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+    .hero-title .highlight {
+      color: transparent;
+      -webkit-text-stroke: 1px var(--accent);
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 420px;
+      margin-bottom: 40px;
+    }
+
+    .btn-group {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+
+    .desktop-btn {
+      padding: 13px 24px;
+      border-radius: 8px;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .desktop-btn:hover { transform: translateY(-1px); opacity: 0.9; }
+    .desktop-btn.filled { background: var(--accent); color: #0d0d0f; }
+    .desktop-btn.outline {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .hero-right {
+      position: relative;
+      overflow: hidden;
+      border-left: 1px solid var(--border);
+      animation: fadeRight 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+    }
+
+    .hero-right-inner {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      padding: 48px 48px 48px 48px;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: cardSlide 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    .post-card:nth-child(1) { animation-delay: 0.3s; }
+    .post-card:nth-child(2) { animation-delay: 0.4s; }
+    .post-card:nth-child(3) { animation-delay: 0.5s; }
+    .post-card:hover {
+      border-color: var(--accent);
+      transform: translateX(-4px);
+    }
+
+    .post-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--accent2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .post-title-card {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .post-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .desktop-footer {
+      padding: 16px 48px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeUp 0.5s ease 0.4s both;
+    }
+    .footer-note {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .dl-badges {
+      display: flex; gap: 16px;
+    }
+    .dl-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .dl-badge:hover { border-color: var(--accent); color: var(--accent); }
+
+    @keyframes fadeDown  { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp    { from { opacity:0; transform:translateY(12px);  } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeLeft  { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes fadeRight { from { opacity:0; transform:translateX(20px);  } to { opacity:1; transform:translateX(0); } }
+    @keyframes cardSlide { from { opacity:0; transform:translateX(16px);  } to { opacity:1; transform:translateX(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════ MOBILE VIEW ═══════════════════ -->
+  <div id="mobile-view">
+    <div class="mobile-bg-decor"></div>
+    <div class="mobile-card">
+      <div class="app-icon">📰</div>
+      <div class="mobile-title">JKPost</div>
+      <div class="mobile-subtitle" id="mobile-subtitle">
+        正在嘗試開啟 App 中的內容…
+      </div>
+
+      <div class="countdown-bar" id="countdown-bar">
+        <div class="countdown-fill" id="countdown-fill" style="width:100%"></div>
+      </div>
+
+      <div class="status-row">
+        <div class="status-dot trying" id="status-dot"></div>
+        <div class="status-text" id="status-text">
+          偵測 App 安裝狀態<span id="status-detail">…</span>
+        </div>
+      </div>
+
+      <button class="cta-btn primary hidden" id="store-btn" onclick="goStore()">
+        <span id="store-btn-icon">⬇</span>
+        <span id="store-btn-label">前往下載</span>
+      </button>
+      <button class="cta-btn secondary hidden" id="retry-btn" onclick="retryDeeplink()">
+        重新嘗試開啟 App
+      </button>
+
+      <div class="divider"></div>
+      <div class="store-badge" id="store-badge"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ DESKTOP VIEW ═══════════════════ -->
+  <div id="desktop-view">
+    <nav class="desktop-nav">
+      <div class="nav-logo">JK<span>Post</span></div>
+      <ul class="nav-links">
+        <li><a href="#">最新文章</a></li>
+        <li><a href="#">熱門話題</a></li>
+        <li><a href="#">關於我們</a></li>
+      </ul>
+    </nav>
+
+    <div class="desktop-main">
+      <div class="hero-left">
+        <div class="eyebrow">歡迎來到 JKPost</div>
+        <h1 class="hero-title">
+          探索<br/>
+          <span class="highlight">精選</span><br/>
+          內容
+        </h1>
+        <p class="hero-desc">
+          JKPost 提供最新、最熱門的話題文章。<br/>
+          下載 App，隨時隨地享受更好的閱讀體驗。
+        </p>
+        <div class="btn-group">
+          <a class="desktop-btn filled" href="#">立即閱讀</a>
+          <a class="desktop-btn outline" href="https://play.google.com/store/apps/details?id=com.jkf.lady" target="_blank">Android App</a>
+          <a class="desktop-btn outline" href="https://apps.apple.com/tw/app/jkone/id1570579526" target="_blank">iOS App</a>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="hero-right-inner">
+          <div class="post-card">
+            <div class="post-tag">熱門</div>
+            <div class="post-title-card">2024 年最值得關注的十大科技趨勢</div>
+            <div class="post-meta">2 小時前 · 3,241 次閱讀</div>
+          </div>
+          <div class="post-card">
+            <div class="post-tag">生活</div>
+            <div class="post-title-card">在城市中找到屬於自己的慢活節奏</div>
+            <div class="post-meta">5 小時前 · 1,887 次閱讀</div>
+          </div>
+          <div class="post-card">
+            <div class="post-tag">財經</div>
+            <div class="post-title-card">全球通膨放緩，台灣經濟前景解析</div>
+            <div class="post-meta">8 小時前 · 4,102 次閱讀</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="desktop-footer">
+      <div class="footer-note">© 2024 JKPost. All rights reserved.</div>
+      <div class="dl-badges">
+        <a class="dl-badge" href="https://play.google.com/store/apps/details?id=com.jkf.lady" target="_blank">▶ Google Play</a>
+        <a class="dl-badge" href="https://apps.apple.com/tw/app/jkone/id1570579526" target="_blank"> App Store</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // ── 設定區 ──────────────────────────────────────────
+    const CONFIG = {
+      deepLinkBase   : 'https://jkpost.net/post/',   // Deep Link 前綴（可附帶 path）
+      androidStore   : 'https://play.google.com/store/apps/details?id=com.jkf.lady',
+      iosStore       : 'https://apps.apple.com/tw/app/jkone/id1570579526',
+      timeoutMs      : 2500,   // 等待 App 回應的秒數
+      countdownMs    : 2500,
+    };
+
+    // ── 裝置偵測 ─────────────────────────────────────────
+    const ua = navigator.userAgent || '';
+    const isAndroid = /Android/i.test(ua);
+    const isIOS     = /iPhone|iPad|iPod/i.test(ua);
+    const isMobile  = isAndroid || isIOS;
+
+    // ── 取得目前完整路徑，組成 Deep Link ─────────────────
+    function buildDeepLink() {
+      // 若本頁面本身就是 https://jkpost.net/post/xxx，直接使用
+      return window.location.href;
+    }
+
+    // ── DOM refs ─────────────────────────────────────────
+    const $mobileView   = document.getElementById('mobile-view');
+    const $desktopView  = document.getElementById('desktop-view');
+    const $statusDot    = document.getElementById('status-dot');
+    const $statusText   = document.getElementById('status-text');
+    const $statusDetail = document.getElementById('status-detail');
+    const $subtitle     = document.getElementById('mobile-subtitle');
+    const $storeBtn     = document.getElementById('store-btn');
+    const $storeBtnLbl  = document.getElementById('store-btn-label');
+    const $storeBtnIcon = document.getElementById('store-btn-icon');
+    const $retryBtn     = document.getElementById('retry-btn');
+    const $badge        = document.getElementById('store-badge');
+    const $cntFill      = document.getElementById('countdown-fill');
+    const $cntBar       = document.getElementById('countdown-bar');
+
+    let storeUrl = '';
+
+    // ── 顯示商店按鈕（App 未安裝時） ──────────────────────
+    function showStoreFallback() {
+      $statusDot.className = 'status-dot failed';
+      $statusText.innerHTML = '未偵測到 App，請先安裝';
+      $subtitle.textContent = '請前往商店下載 App，即可開啟完整內容。';
+      $cntBar.style.display = 'none';
+
+      if (isAndroid) {
+        $storeBtnLbl.textContent = '前往 Google Play 下載';
+        $storeBtnIcon.textContent = '▶';
+        $badge.textContent = 'com.jkf.lady · Google Play';
+      } else {
+        $storeBtnLbl.textContent = '前往 App Store 下載';
+        $storeBtnIcon.textContent = '';
+        $badge.textContent = 'JKone · App Store';
+      }
+
+      $storeBtn.classList.remove('hidden');
+      $retryBtn.classList.remove('hidden');
+    }
+
+    // ── 前往商店 ──────────────────────────────────────────
+    function goStore() {
+      window.location.href = storeUrl;
+    }
+
+    // ── 重試 Deep Link ────────────────────────────────────
+    function retryDeeplink() {
+      $storeBtn.classList.add('hidden');
+      $retryBtn.classList.add('hidden');
+      $statusDot.className = 'status-dot trying';
+      $statusText.innerHTML = '重新嘗試開啟 App<span id="status-detail">…</span>';
+      $cntBar.style.display = '';
+      $subtitle.textContent = '正在嘗試開啟 App 中的內容…';
+      tryDeepLink();
+    }
+
+    // ── 倒數動畫 ──────────────────────────────────────────
+    function startCountdown(ms) {
+      const start = Date.now();
+      const tick = () => {
+        const elapsed = Date.now() - start;
+        const pct = Math.max(0, 100 - (elapsed / ms) * 100);
+        $cntFill.style.width = pct + '%';
+        if (elapsed < ms) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    // ── 核心：嘗試 Deep Link ──────────────────────────────
+    function tryDeepLink() {
+      const deepLink = buildDeepLink();
+      startCountdown(CONFIG.countdownMs);
+
+      // 頁面隱藏時 = App 被喚醒，取消 fallback
+      let appOpened = false;
+      const onHide = () => {
+        if (document.hidden) {
+          appOpened = true;
+          $statusDot.className = 'status-dot success';
+          $statusText.innerHTML = 'App 已開啟 ✓';
+        }
+      };
+      document.addEventListener('visibilitychange', onHide, { once: true });
+
+      // 嘗試跳轉
+      window.location.href = deepLink;
+
+      // timeout 後若頁面沒被隱藏 → 跳商店
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onHide);
+        if (!appOpened) showStoreFallback();
+      }, CONFIG.timeoutMs);
+    }
+
+    // ── 主流程 ────────────────────────────────────────────
+    function init() {
+      if (!isMobile) {
+        // 桌機：直接顯示網頁
+        $desktopView.style.display = 'flex';
+        return;
+      }
+
+      // 行動裝置：顯示 mobile UI
+      $mobileView.style.display = 'flex';
+      storeUrl = isAndroid ? CONFIG.androidStore : CONFIG.iosStore;
+
+      // 設定平台名稱
+      $statusDetail.textContent = isAndroid ? '（Android）' : '（iOS）';
+
+      tryDeepLink();
+    }
+
+    init();
+  </script>
+</body>
+</html>
