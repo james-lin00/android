@@ -476,12 +476,15 @@
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
       // ── WebView 偵測 ──────────────────────────────────
-      // Android WebView：UA 含 wv，或含 Version/x.x（非 Chrome）
-      const isAndroidWebView = /android/i.test(userAgent) && (/wv\)/.test(userAgent) || (/Version\/\d/.test(userAgent) && !/Chrome/.test(userAgent)));
-      // iOS WKWebView：含 AppleWebKit 但不含 Safari
-      const isIOSWebView = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /AppleWebKit/.test(userAgent) && !/Safari/.test(userAgent);
+      // 第一優先：自訂 UA
+      const isCustomWebView = /JKONE/i.test(userAgent);
 
-      const isWebView = isAndroidWebView || isIOSWebView;
+      // 第二優先：通用 WebView 特徵
+      const isAndroidWebView = /android/i.test(userAgent) && (/wv\)/.test(userAgent) || (/Version\/\d/.test(userAgent) && !/Chrome/.test(userAgent)));
+      const isIOSWebView = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /AppleWebKit/.test(userAgent) && !/Safari/.test(userAgent);
+      const isGenericWebView = isAndroidWebView || isIOSWebView;
+
+      const isWebView = isCustomWebView || isGenericWebView;
 
       // WebView 內 → 顯示桌機版內容（正常瀏覽）
       if (isWebView) {
