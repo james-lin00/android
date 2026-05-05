@@ -507,11 +507,10 @@
   <script>
     // ── 設定區 ──────────────────────────────────────────
     const CONFIG = {
-      deepLinkBase   : 'https://jkpost.net/post/',   // Deep Link 前綴（可附帶 path）
-      androidStore   : 'https://play.google.com/store/apps/details?id=com.jkf.lady',
-      iosStore       : 'https://apps.apple.com/tw/app/jkone/id1570579526',
-      timeoutMs      : 2500,   // 等待 App 回應的秒數
-      countdownMs    : 2500,
+      deepLinkBase : 'https://jkpost.net/post/551',
+      androidStore : 'https://play.google.com/store/apps/details?id=com.jkf.lady',
+      iosStore     : 'https://apps.apple.com/tw/app/jkone/id1570579526',
+      timeoutMs    : 1000,
     };
 
     // ── 裝置偵測 ─────────────────────────────────────────
@@ -520,9 +519,7 @@
     const isIOS     = /iPhone|iPad|iPod/i.test(ua);
     const isMobile  = isAndroid || isIOS;
 
-    // ── 取得目前完整路徑，組成 Deep Link ─────────────────
     function buildDeepLink() {
-      // 若本頁面本身就是 https://jkpost.net/post/xxx，直接使用
       return window.location.href;
     }
 
@@ -564,12 +561,10 @@
       $retryBtn.classList.remove('hidden');
     }
 
-    // ── 前往商店 ──────────────────────────────────────────
     function goStore() {
       window.location.href = storeUrl;
     }
 
-    // ── 重試 Deep Link ────────────────────────────────────
     function retryDeeplink() {
       $storeBtn.classList.add('hidden');
       $retryBtn.classList.add('hidden');
@@ -592,45 +587,63 @@
       requestAnimationFrame(tick);
     }
 
-    // ── 核心：嘗試 Deep Link ──────────────────────────────
+    // ── 核心：嘗試 Deep Link（Android / iOS 分開處理）─────
     function tryDeepLink() {
       const deepLink = buildDeepLink();
-      startCountdown(CONFIG.countdownMs);
+      startCountdown(CONFIG.timeoutMs);
 
-      // 頁面隱藏時 = App 被喚醒，取消 fallback
       let appOpened = false;
-      const onHide = () => {
-        if (document.hidden) {
-          appOpened = true;
-          $statusDot.className = 'status-dot success';
-          $statusText.innerHTML = 'App 已開啟 ✓';
-        }
-      };
-      document.addEventListener('visibilitychange', onHide, { once: true });
 
-      // 嘗試跳轉
-      window.location.href = deepLink;
+      // ── 標記 App 已開啟的共用函式 ──
+      function markOpened() {
+        if (appOpened) return;
+        appOpened = true;
+        $statusDot.className = 'status-dot success';
+        $statusText.innerHTML = 'App 已開啟 ✓';
+        $cntBar.style.display = 'none';
+      }
 
-      // timeout 後若頁面沒被隱藏 → 跳商店
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', onHide);
-        if (!appOpened) showStoreFallback();
-      }, CONFIG.timeoutMs);
+      if (isIOS) {
+        // iOS：用 window blur + pagehide 偵測（比 visibilitychange 可靠）
+        const onBlur     = () => markOpened();
+        const onPageHide = () => markOpened();
+
+        window.addEventListener('blur',     onBlur,     { once: true });
+        window.addEventListener('pagehide', onPageHide, { once: true });
+
+        // 丟出 Deep Link
+        window.location.href = deepLink;
+
+        setTimeout(() => {
+          window.removeEventListener('blur',     onBlur);
+          window.removeEventListener('pagehide', onPageHide);
+          if (!appOpened) showStoreFallback();
+        }, CONFIG.timeoutMs);
+
+      } else {
+        // Android：用 visibilitychange（穩定可靠）
+        const onHide = () => {
+          if (document.hidden) markOpened();
+        };
+        document.addEventListener('visibilitychange', onHide, { once: true });
+
+        window.location.href = deepLink;
+
+        setTimeout(() => {
+          document.removeEventListener('visibilitychange', onHide);
+          if (!appOpened) showStoreFallback();
+        }, CONFIG.timeoutMs);
+      }
     }
 
-    // ── 主流程 ────────────────────────────────────────────
     function init() {
       if (!isMobile) {
-        // 桌機：直接顯示網頁
         $desktopView.style.display = 'flex';
         return;
       }
 
-      // 行動裝置：顯示 mobile UI
       $mobileView.style.display = 'flex';
       storeUrl = isAndroid ? CONFIG.androidStore : CONFIG.iosStore;
-
-      // 設定平台名稱
       $statusDetail.textContent = isAndroid ? '（Android）' : '（iOS）';
 
       tryDeepLink();
