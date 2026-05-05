@@ -588,53 +588,31 @@
       requestAnimationFrame(tick);
     }
 
-    // ── 核心：嘗試 Deep Link（Android / iOS 分開處理）─────
+    // ── 核心：嘗試 Deep Link（Date.now 時間差，Android/iOS 統一）──
     function tryDeepLink() {
       const deepLink = buildDeepLink();
       startCountdown(CONFIG.timeoutMs);
 
-      let appOpened = false;
+      // 記錄跳轉前時間
+      const t1 = Date.now();
 
-      // ── 標記 App 已開啟的共用函式 ──
-      function markOpened() {
-        if (appOpened) return;
-        appOpened = true;
-        $statusDot.className = 'status-dot success';
-        $statusText.innerHTML = 'App 已開啟 ✓';
-        $cntBar.style.display = 'none';
-      }
+      // 丟出 Deep Link
+      window.location.href = deepLink;
 
-      if (isIOS) {
-        // iOS：用 window blur + pagehide 偵測（比 visibilitychange 可靠）
-        const onBlur     = () => markOpened();
-        const onPageHide = () => markOpened();
+      // App 被喚醒時，瀏覽器 JS 執行會被凍結
+      // 回來後 elapsed 會遠大於 timeoutMs，用此判斷是否有開啟 App
+      setTimeout(() => {
+        const elapsed = Date.now() - t1;
+        const appOpened = elapsed > CONFIG.timeoutMs + 200;
 
-        window.addEventListener('blur',     onBlur,     { once: true });
-        window.addEventListener('pagehide', onPageHide, { once: true });
-
-        // 丟出 Deep Link
-        window.location.href = deepLink;
-
-        setTimeout(() => {
-          window.removeEventListener('blur',     onBlur);
-          window.removeEventListener('pagehide', onPageHide);
-          if (!appOpened) showStoreFallback();
-        }, CONFIG.timeoutMs);
-
-      } else {
-        // Android：用 visibilitychange（穩定可靠）
-        const onHide = () => {
-          if (document.hidden) markOpened();
-        };
-        document.addEventListener('visibilitychange', onHide, { once: true });
-
-        window.location.href = deepLink;
-
-        setTimeout(() => {
-          document.removeEventListener('visibilitychange', onHide);
-          if (!appOpened) showStoreFallback();
-        }, CONFIG.timeoutMs);
-      }
+        if (appOpened) {
+          $statusDot.className = 'status-dot success';
+          $statusText.innerHTML = 'App 已開啟 ✓';
+          $cntBar.style.display = 'none';
+        } else {
+          showStoreFallback();
+        }
+      }, CONFIG.timeoutMs);
     }
 
     function init() {
