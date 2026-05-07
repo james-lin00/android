@@ -484,8 +484,8 @@
       const isIOSWebView = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /AppleWebKit/.test(userAgent) && !/Safari/.test(userAgent);
       const isGenericWebView = isAndroidWebView || isIOSWebView;
 
-      const isWebView = isCustomWebView || isGenericWebView;
-      //const isWebView = isCustomWebView;
+      //const isWebView = isCustomWebView || isGenericWebView;
+      const isWebView = isGenericWebView;
 
       // WebView 內 → 顯示桌機版內容（正常瀏覽）
       if (isWebView) {
